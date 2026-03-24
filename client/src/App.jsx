@@ -533,7 +533,7 @@ export default function App() {
   const [adding, setAdding]           = useState(false);
   const [viewing, setViewing]         = useState(null);
   const [selected, setSelected]       = useState(null);
-  const [view, setView]               = useState("list");
+  const [view, setView]               = useState("calendar");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const { instance } = useMsal();
