@@ -157,6 +157,22 @@ function Combobox({ value, onChange, options, placeholder, onAddOption }) {
 function LoginScreen({ onLogin }) {
   const [step, setStep] = useState("landing");
   const [hovered, setHovered] = useState(null);
+  const [showLocal, setShowLocal] = useState(false);
+  const [localUser, setLocalUser] = useState("");
+  const [localPass, setLocalPass] = useState("");
+  const [localError, setLocalError] = useState("");
+
+  // Emergency local admin account — change these credentials as needed
+  const LOCAL_ADMIN = { username: "admin", password: "Johnstone2024!" };
+
+  const handleLocalLogin = () => {
+    if (localUser === LOCAL_ADMIN.username && localPass === LOCAL_ADMIN.password) {
+      onLogin({ id: 0, name: "Admin", email: "admin@local", role: "editor", branch: null, avatar: "AD" });
+    } else {
+      setLocalError("Incorrect username or password.");
+    }
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 60%, #1a3a6b 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 440 }}>
@@ -166,34 +182,59 @@ function LoginScreen({ onLogin }) {
           <div style={{ color: "#94A3B8", fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 4 }}>Inbound Logistics Portal</div>
         </div>
         <div style={{ background: "#fff", borderRadius: 20, overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.35)" }}>
-          {step === "landing" ? (
-            <div style={{ padding: "40px 40px 36px" }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#0F172A", marginBottom: 6 }}>Welcome back</div>
-              <div style={{ fontSize: 14, color: "#64748B", marginBottom: 32 }}>Sign in to access your shipment dashboard.</div>
-              <button onClick={() => setStep("picking")} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "13px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "#fff", color: "#0F172A", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
-                Sign in with Microsoft
-              </button>
-              <div style={{ textAlign: "center", marginTop: 24, color: "#94A3B8", fontSize: 12 }}>Microsoft Entra ID (Azure AD) · Single Sign-On</div>
-            </div>
-          ) : (
-            <div>
-              <div style={{ padding: "24px 28px 16px", borderBottom: "1px solid #F1F5F9" }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#0F172A" }}>Choose an account</div>
-                <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>Select a demo account to preview permission levels</div>
-              </div>
-              {DEMO_ACCOUNTS.map(a => (
-                <button key={a.id} onClick={() => onLogin(a)} onMouseEnter={() => setHovered(a.id)} onMouseLeave={() => setHovered(null)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "12px 28px", border: "none", background: hovered === a.id ? "#F8FAFC" : "transparent", cursor: "pointer", fontFamily: "inherit" }}>
-                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg, #0F172A, #1E3A5F)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{a.avatar}</div>
-                  <div style={{ flex: 1, textAlign: "left" }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>{a.name}</div>
-                    <div style={{ fontSize: 11, color: "#94A3B8" }}>{a.email}</div>
+          {!showLocal ? (
+            <>
+              {step === "landing" ? (
+                <div style={{ padding: "40px 40px 36px" }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: "#0F172A", marginBottom: 6 }}>Welcome back</div>
+                  <div style={{ fontSize: 14, color: "#64748B", marginBottom: 32 }}>Sign in to access your shipment dashboard.</div>
+                  <button onClick={() => setStep("picking")} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "13px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "#fff", color: "#0F172A", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
+                    Sign in with Microsoft
+                  </button>
+                  <div style={{ textAlign: "center", marginTop: 24, color: "#94A3B8", fontSize: 12 }}>Microsoft Entra ID (Azure AD) · Single Sign-On</div>
+                  <div style={{ textAlign: "center", marginTop: 16 }}>
+                    <button onClick={() => setShowLocal(true)} style={{ background: "none", border: "none", color: "#CBD5E1", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>Emergency access</button>
                   </div>
-                  <span style={{ padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: a.role === "editor" ? "#EFF6FF" : "#F1F5F9", color: a.role === "editor" ? "#2563EB" : "#64748B" }}>{a.role}</span>
-                </button>
-              ))}
-              <div style={{ padding: "10px 28px 18px" }}>
-                <button onClick={() => setStep("landing")} style={{ background: "none", border: "none", color: "#94A3B8", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>← Back</button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ padding: "24px 28px 16px", borderBottom: "1px solid #F1F5F9" }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0F172A" }}>Choose an account</div>
+                    <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>Select a demo account to preview permission levels</div>
+                  </div>
+                  {DEMO_ACCOUNTS.map(a => (
+                    <button key={a.id} onClick={() => onLogin(a)} onMouseEnter={() => setHovered(a.id)} onMouseLeave={() => setHovered(null)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "12px 28px", border: "none", background: hovered === a.id ? "#F8FAFC" : "transparent", cursor: "pointer", fontFamily: "inherit" }}>
+                      <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg, #0F172A, #1E3A5F)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{a.avatar}</div>
+                      <div style={{ flex: 1, textAlign: "left" }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>{a.name}</div>
+                        <div style={{ fontSize: 11, color: "#94A3B8" }}>{a.email}</div>
+                      </div>
+                      <span style={{ padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: a.role === "editor" ? "#EFF6FF" : "#F1F5F9", color: a.role === "editor" ? "#2563EB" : "#64748B" }}>{a.role}</span>
+                    </button>
+                  ))}
+                  <div style={{ padding: "10px 28px 18px" }}>
+                    <button onClick={() => setStep("landing")} style={{ background: "none", border: "none", color: "#94A3B8", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>← Back</button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ padding: "36px 40px" }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#0F172A", marginBottom: 4 }}>Emergency Access</div>
+              <div style={{ fontSize: 13, color: "#94A3B8", marginBottom: 24 }}>For authorized administrators only.</div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Username</label>
+                <input value={localUser} onChange={e => { setLocalUser(e.target.value); setLocalError(""); }} placeholder="Username" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #E2E8F0", fontSize: 14, color: "#0F172A", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
+              </div>
+              <div style={{ marginBottom: 6 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Password</label>
+                <input type="password" value={localPass} onChange={e => { setLocalPass(e.target.value); setLocalError(""); }} onKeyDown={e => e.key === "Enter" && handleLocalLogin()} placeholder="Password" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${localError ? "#DC2626" : "#E2E8F0"}`, fontSize: 14, color: "#0F172A", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
+                {localError && <div style={{ fontSize: 11, color: "#DC2626", marginTop: 4, fontWeight: 600 }}>⚠ {localError}</div>}
+              </div>
+              <button onClick={handleLocalLogin} style={{ width: "100%", padding: "12px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0F172A, #1E3A5F)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginTop: 16 }}>Sign In</button>
+              <div style={{ textAlign: "center", marginTop: 16 }}>
+                <button onClick={() => { setShowLocal(false); setLocalError(""); setLocalUser(""); setLocalPass(""); }} style={{ background: "none", border: "none", color: "#94A3B8", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>← Back to Microsoft login</button>
               </div>
             </div>
           )}
