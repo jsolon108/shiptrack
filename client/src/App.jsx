@@ -161,8 +161,8 @@ function LoginScreen({ onLogin }) {
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 60%, #1a3a6b 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 440 }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, margin: "0 auto 16px" }}>📦</div>
-          <div style={{ color: "#fff", fontWeight: 800, fontSize: 26 }}>ShipTrack</div>
+          <img src="/logo.png" alt="Johnstone Supply" style={{ height: 80, width: "auto", margin: "0 auto 16px", display: "block" }} />
+          <div style={{ color: "#fff", fontWeight: 800, fontSize: 26 }}>Johnstone Supply ShipTrack</div>
           <div style={{ color: "#94A3B8", fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 4 }}>Inbound Logistics Portal</div>
         </div>
         <div style={{ background: "#fff", borderRadius: 20, overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.35)" }}>
@@ -676,12 +676,12 @@ export default function App() {
       <div style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)", padding: "0 32px" }}>
         <div style={{ maxWidth: 1300, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>📦</div>
-            <div>
-              <div style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>ShipTrack</div>
-              <div style={{ color: "#94A3B8", fontSize: 11, letterSpacing: "0.06em" }}>INBOUND LOGISTICS</div>
-            </div>
-          </div>
+  <img src="/logo.png" alt="Johnstone Supply" style={{ height: 44, width: "auto" }} />
+  <div>
+    <div style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>Johnstone Supply ShipTrack</div>
+    <div style={{ color: "#94A3B8", fontSize: 11, letterSpacing: "0.06em" }}>INBOUND LOGISTICS</div>
+  </div>
+</div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ display: "flex", background: "rgba(255,255,255,0.1)", borderRadius: 8, padding: 3, gap: 2 }}>
               {[["list","≡  List"],["calendar","⊞  Calendar"]].map(([v,l]) => (
