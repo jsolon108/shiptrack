@@ -217,7 +217,7 @@ function Combobox({ value, onChange, options, placeholder, onAddOption }) {
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-function DetailModal({ shipment: s, onClose, onEdit, canEdit }) {
+function DetailModal({ shipment: s, onClose, onEdit, onMarkReceived, canEdit }) {
   const window2 = formatTimeWindow(s.etaStart, s.etaEnd);
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
@@ -255,6 +255,9 @@ function DetailModal({ shipment: s, onClose, onEdit, canEdit }) {
           {s.notes && <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 8, fontSize: 13, color: "#475569", marginBottom: 16 }}><span style={{ fontWeight: 600, color: "#64748B" }}>Notes: </span>{s.notes}</div>}
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <button onClick={onClose} style={{ padding: "9px 20px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Close</button>
+            {canEdit && s.status !== "Received" && (
+              <button onClick={() => onMarkReceived(s)} style={{ padding: "9px 20px", borderRadius: 8, border: "none", background: "#16A34A", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>✓ Mark Received</button>
+            )}
             {canEdit && <button onClick={() => onEdit(s)} style={{ padding: "9px 20px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0F172A, #1E3A5F)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Edit Shipment</button>}
           </div>
         </div>
@@ -625,7 +628,12 @@ export default function App() {
     setEditing(null);
     setViewing(null);
   };
-
+ const handleMarkReceived = async (shipment) => {
+    const updated = { ...shipment, status: "Received" };
+    await supabase.from("shipments").update({ status: "Received" }).eq("id", shipment.id);
+    setShipments(s => s.map(sh => sh.id === shipment.id ? updated : sh));
+    setViewing(null);
+  };
   const isOverdue = (s) => s.status !== "Received" && new Date(s.eta) < new Date();
   const handleEditFromDetail = (s) => { setViewing(null); setEditing(s); };
 
@@ -804,7 +812,7 @@ export default function App() {
         )}
       </div>
 
-      {viewing && <DetailModal shipment={viewing} onClose={() => setViewing(null)} onEdit={handleEditFromDetail} canEdit={canEdit} />}
+      {viewing && <DetailModal shipment={viewing} onClose={() => setViewing(null)} onEdit={handleEditFromDetail} onMarkReceived={handleMarkReceived} canEdit={canEdit} />}
       {(editing || adding) && <EditModal shipment={editing} isNew={adding} onClose={() => { setEditing(null); setAdding(false); }} onSave={handleSave} onDelete={handleDelete} suppliers={suppliers} carriers={carriers} onAddSupplier={handleAddSupplier} onAddCarrier={handleAddCarrier} />}
     </div>
   );
