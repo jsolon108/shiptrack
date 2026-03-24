@@ -674,9 +674,7 @@ export default function App() {
       console.error("Login failed", e);
     }
   };
-    } catch (e) {
-      console.error("Login failed", e);
-    }
+
   };
   const handleLogout = () => { setCurrentUser(null); setBranch("All Branches"); setUserMenuOpen(false); setSelected(null); };
 
