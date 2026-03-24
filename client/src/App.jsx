@@ -647,23 +647,33 @@ export default function App() {
 
   const canEdit = currentUser?.role === "editor";
 
- const handleLogin  = (a) => { setCurrentUser(a); if (a.branch) setBranch(a.branch); };
-  const { instance } = useMsal();
+ const handleLogin = (a) => { setCurrentUser(a); if (a.branch) setBranch(a.branch); };
+  const { instance, accounts } = useMsal();
+
+  useEffect(() => {
+    instance.handleRedirectPromise().then(result => {
+      if (result) {
+        const groups = result.idTokenClaims?.groups || [];
+        const isEditor = groups.includes(EDITOR_GROUP_ID);
+        setCurrentUser({
+          id: result.account.localAccountId,
+          name: result.account.name,
+          email: result.account.username,
+          role: isEditor ? "editor" : "viewer",
+          branch: null,
+          avatar: result.account.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
+        });
+      }
+    }).catch(e => console.error(e));
+  }, [instance]);
 
   const handleMicrosoftLogin = async () => {
     try {
-      const result = await instance.loginPopup(loginRequest);
-      const account = result.account;
-      const groups = result.idTokenClaims?.groups || [];
-      const isEditor = groups.includes(EDITOR_GROUP_ID);
-      setCurrentUser({
-        id: account.localAccountId,
-        name: account.name,
-        email: account.username,
-        role: isEditor ? "editor" : "viewer",
-        branch: null,
-        avatar: account.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
-      });
+      await instance.loginRedirect(loginRequest);
+    } catch (e) {
+      console.error("Login failed", e);
+    }
+  };
     } catch (e) {
       console.error("Login failed", e);
     }
