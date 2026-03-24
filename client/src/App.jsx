@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { supabase } from "./supabase";
+import { useMsal } from "@azure/msal-react";
+import { loginRequest, EDITOR_GROUP_ID } from "./authConfig";
 
 const BRANCHES = ["All Branches", "Farmingdale", "Bohemia"];
 
@@ -154,7 +156,7 @@ function Combobox({ value, onChange, options, placeholder, onAddOption }) {
 }
 
 // ─── Login Screen ─────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onLogin, onMicrosoftLogin }) {
   const [step, setStep] = useState("landing");
   const [hovered, setHovered] = useState(null);
   const [showLocal, setShowLocal] = useState(false);
@@ -188,10 +190,10 @@ function LoginScreen({ onLogin }) {
                 <div style={{ padding: "40px 40px 36px" }}>
                   <div style={{ fontSize: 20, fontWeight: 700, color: "#0F172A", marginBottom: 6 }}>Welcome back</div>
                   <div style={{ fontSize: 14, color: "#64748B", marginBottom: 32 }}>Sign in to access your shipment dashboard.</div>
-                  <button onClick={() => setStep("picking")} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "13px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "#fff", color: "#0F172A", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                    <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
-                    Sign in with Microsoft
-                  </button>
+                  <button onClick={onMicrosoftLogin} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "13px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "#fff", color: "#0F172A", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+  <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
+  Sign in with Microsoft
+</button>
                   <div style={{ textAlign: "center", marginTop: 24, color: "#94A3B8", fontSize: 12 }}>Microsoft Entra ID (Azure AD) · Single Sign-On</div>
                   <div style={{ textAlign: "center", marginTop: 16 }}>
                     <button onClick={() => setShowLocal(true)} style={{ background: "none", border: "none", color: "#CBD5E1", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>Emergency access</button>
@@ -645,7 +647,27 @@ export default function App() {
 
   const canEdit = currentUser?.role === "editor";
 
-  const handleLogin  = (a) => { setCurrentUser(a); if (a.branch) setBranch(a.branch); };
+ const handleLogin  = (a) => { setCurrentUser(a); if (a.branch) setBranch(a.branch); };
+  const { instance } = useMsal();
+
+  const handleMicrosoftLogin = async () => {
+    try {
+      const result = await instance.loginPopup(loginRequest);
+      const account = result.account;
+      const groups = result.idTokenClaims?.groups || [];
+      const isEditor = groups.includes(EDITOR_GROUP_ID);
+      setCurrentUser({
+        id: account.localAccountId,
+        name: account.name,
+        email: account.username,
+        role: isEditor ? "editor" : "viewer",
+        branch: null,
+        avatar: account.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
+      });
+    } catch (e) {
+      console.error("Login failed", e);
+    }
+  };
   const handleLogout = () => { setCurrentUser(null); setBranch("All Branches"); setUserMenuOpen(false); setSelected(null); };
 
   const branchShipments = useMemo(() => branch === "All Branches" ? shipments : shipments.filter(s => s.branch === branch), [shipments, branch]);
@@ -699,7 +721,7 @@ export default function App() {
   const handleEditFromDetail = (s) => { setViewing(null); setEditing(s); };
 
   if (!currentUser) return (
-    <><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" /><LoginScreen onLogin={handleLogin} /></>
+    <><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" /><LoginScreen onLogin={handleLogin} onMicrosoftLogin={handleMicrosoftLogin} /></>
   );
 
   const inputRow = (label, val, extra) => (
