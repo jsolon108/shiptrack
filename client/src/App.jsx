@@ -258,9 +258,22 @@ function DetailModal({ shipment: s, onClose, onEdit, canEdit }) {
     </div>
   );
 }
-
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
-function EditModal({ shipment, onClose, onSave, isNew, suppliers, carriers, onAddSupplier, onAddCarrier }) {
+const TIME_SLOTS = (() => {
+  const slots = [{ label: "-- Select --", value: "" }];
+  for (let h = 0; h < 24; h++) {
+    for (let m of [0, 30]) {
+      const ampm = h >= 12 ? "PM" : "AM";
+      const hour = h % 12 === 0 ? 12 : h % 12;
+      const min  = m === 0 ? "00" : "30";
+      const val  = `${String(h).padStart(2,"0")}:${min}`;
+      slots.push({ label: `${hour}:${min} ${ampm}`, value: val });
+    }
+  }
+  return slots;
+})();
+
+function EditModal({ shipment, onClose, onSave, onDelete, isNew, suppliers, carriers, onAddSupplier, onAddCarrier }) {
   const blank = { branch: "Farmingdale", supplier: "", po: "", carrier: "", carrierPhone: "", carrierContact: "", tracking: "", pieces: "", eta: "", etaStart: "", etaEnd: "", status: "In Transit", notes: "" };
   const [form, setForm] = useState(shipment || blank);
   const [errors, setErrors] = useState({});
@@ -268,21 +281,31 @@ function EditModal({ shipment, onClose, onSave, isNew, suppliers, carriers, onAd
 
   const inputStyle = { width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #E2E8F0", fontSize: 14, color: "#0F172A", outline: "none", boxSizing: "border-box", fontFamily: "inherit", background: "#fff" };
   const labelStyle = { display: "block", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 };
+  const errStyle   = { fontSize: 11, color: "#DC2626", marginTop: 4, fontWeight: 600 };
+  const req = <span style={{ color: "#DC2626" }}> *</span>;
+
+  const borderErr = (k) => ({ ...inputStyle, borderColor: errors[k] ? "#DC2626" : "#E2E8F0" });
 
   const validate = () => {
     const e = {};
-    if (!form.supplier.trim()) e.supplier = "Supplier is required";
-    if (!form.po.trim())       e.po       = "PO number is required";
-    if (!form.carrier.trim())  e.carrier  = "Carrier is required";
-    if (!form.eta)             e.eta      = "Delivery date is required";
+    if (!form.supplier.trim()) e.supplier = "Required";
+    if (!form.po.trim())       e.po       = "Required";
+    if (!form.carrier.trim())  e.carrier  = "Required";
+    if (!form.tracking.trim()) e.tracking = "Required";
+    if (!form.eta)             e.eta      = "Required";
+    if (!form.etaStart)        e.etaStart = "Required";
+    if (!form.etaEnd)          e.etaEnd   = "Required";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSave = () => { if (validate()) onSave(form); };
 
-  const errStyle = { fontSize: 11, color: "#DC2626", marginTop: 4, fontWeight: 600 };
-  const borderErr = (k) => ({ ...inputStyle, borderColor: errors[k] ? "#DC2626" : "#E2E8F0" });
+  const timeSelect = (key) => (
+    <select value={form[key]} onChange={e => set(key, e.target.value)} style={{ ...borderErr(key), appearance: "none", WebkitAppearance: "none" }}>
+      {TIME_SLOTS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+    </select>
+  );
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
@@ -299,52 +322,40 @@ function EditModal({ shipment, onClose, onSave, isNew, suppliers, carriers, onAd
 
           {/* Branch */}
           <div>
-            <label style={labelStyle}>Branch</label>
+            <label style={labelStyle}>Branch{req}</label>
             <select value={form.branch} onChange={e => set("branch", e.target.value)} style={inputStyle}>
               {BRANCHES.filter(b => b !== "All Branches").map(b => <option key={b}>{b}</option>)}
             </select>
           </div>
 
-          {/* Supplier + PO side by side */}
+          {/* Supplier + PO */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div>
-              <label style={labelStyle}>Supplier / Vendor <span style={{ color: "#DC2626" }}>*</span></label>
-              <Combobox
-                value={form.supplier}
-                onChange={v => set("supplier", v)}
-                options={suppliers}
-                placeholder="e.g. Acme Manufacturing"
-                onAddOption={onAddSupplier}
-              />
+              <label style={labelStyle}>Supplier / Vendor{req}</label>
+              <Combobox value={form.supplier} onChange={v => set("supplier", v)} options={suppliers} placeholder="e.g. Acme Manufacturing" onAddOption={onAddSupplier} error={errors.supplier} />
               {errors.supplier && <div style={errStyle}>⚠ {errors.supplier}</div>}
             </div>
             <div>
-              <label style={labelStyle}>PO Number <span style={{ color: "#DC2626" }}>*</span></label>
+              <label style={labelStyle}>PO Number{req}</label>
               <input value={form.po} onChange={e => set("po", e.target.value)} placeholder="e.g. PO-2024-0441" style={borderErr("po")} />
               {errors.po && <div style={errStyle}>⚠ {errors.po}</div>}
             </div>
           </div>
 
-          {/* Pieces / Skids */}
+          {/* Pieces */}
           <div>
             <label style={labelStyle}>Pieces / Skids</label>
             <input value={form.pieces} onChange={e => set("pieces", e.target.value)} placeholder="e.g. 42 skids, 10 pieces" style={inputStyle} />
           </div>
 
-          {/* Carrier with combobox */}
+          {/* Carrier */}
           <div>
-            <label style={labelStyle}>Carrier <span style={{ color: "#DC2626" }}>*</span></label>
-            <Combobox
-              value={form.carrier}
-              onChange={v => set("carrier", v)}
-              options={carriers}
-              placeholder="e.g. FedEx Freight"
-              onAddOption={onAddCarrier}
-            />
+            <label style={labelStyle}>Carrier{req}</label>
+            <Combobox value={form.carrier} onChange={v => set("carrier", v)} options={carriers} placeholder="e.g. FedEx Freight" onAddOption={onAddCarrier} error={errors.carrier} />
             {errors.carrier && <div style={errStyle}>⚠ {errors.carrier}</div>}
           </div>
 
-          {/* Contact name + phone side by side */}
+          {/* Contact + Phone */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div>
               <label style={labelStyle}>Contact Name</label>
@@ -358,25 +369,29 @@ function EditModal({ shipment, onClose, onSave, isNew, suppliers, carriers, onAd
 
           {/* Tracking */}
           <div>
-            <label style={labelStyle}>Tracking Number</label>
-            <input value={form.tracking} onChange={e => set("tracking", e.target.value)} placeholder="e.g. 7489234701984" style={inputStyle} />
+            <label style={labelStyle}>Tracking Number{req}</label>
+            <input value={form.tracking} onChange={e => set("tracking", e.target.value)} placeholder="e.g. 7489234701984" style={borderErr("tracking")} />
+            {errors.tracking && <div style={errStyle}>⚠ {errors.tracking}</div>}
           </div>
 
-          {/* Expected Delivery — date + time window */}
+          {/* Expected Delivery */}
           <div>
             <label style={labelStyle}>Expected Delivery</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
               <div>
-                <div style={{ fontSize: 11, color: "#94A3B8", marginBottom: 5 }}>Date</div>
-                <input type="date" value={form.eta} onChange={e => set("eta", e.target.value)} style={inputStyle} />
+                <div style={{ fontSize: 11, color: "#64748B", fontWeight: 600, marginBottom: 5 }}>Date{req}</div>
+                <input type="date" value={form.eta} onChange={e => set("eta", e.target.value)} style={borderErr("eta")} />
+                {errors.eta && <div style={errStyle}>⚠ {errors.eta}</div>}
               </div>
               <div>
-                <div style={{ fontSize: 11, color: "#94A3B8", marginBottom: 5 }}>Time From <span style={{ color: "#CBD5E1" }}>(optional)</span></div>
-                <input type="time" value={form.etaStart} onChange={e => set("etaStart", e.target.value)} style={inputStyle} />
+                <div style={{ fontSize: 11, color: "#64748B", fontWeight: 600, marginBottom: 5 }}>Time From{req}</div>
+                {timeSelect("etaStart")}
+                {errors.etaStart && <div style={errStyle}>⚠ {errors.etaStart}</div>}
               </div>
               <div>
-                <div style={{ fontSize: 11, color: "#94A3B8", marginBottom: 5 }}>Time To <span style={{ color: "#CBD5E1" }}>(optional)</span></div>
-                <input type="time" value={form.etaEnd} onChange={e => set("etaEnd", e.target.value)} style={inputStyle} />
+                <div style={{ fontSize: 11, color: "#64748B", fontWeight: 600, marginBottom: 5 }}>Time To{req}</div>
+                {timeSelect("etaEnd")}
+                {errors.etaEnd && <div style={errStyle}>⚠ {errors.etaEnd}</div>}
               </div>
             </div>
           </div>
@@ -398,6 +413,9 @@ function EditModal({ shipment, onClose, onSave, isNew, suppliers, carriers, onAd
 
         {/* Fixed footer */}
         <div style={{ padding: "16px 28px", borderTop: "1px solid #F1F5F9", display: "flex", gap: 10, justifyContent: "flex-end", flexShrink: 0, background: "#fff" }}>
+          {!isNew && onDelete && (
+            <button onClick={() => onDelete(form.id)} style={{ padding: "10px 20px", borderRadius: 8, border: "1.5px solid #FEE2E2", background: "#FEF2F2", color: "#DC2626", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginRight: "auto" }}>Delete Shipment</button>
+          )}
           <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
           <button onClick={handleSave} style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0F172A, #1E3A5F)", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{isNew ? "Add Shipment" : "Save Changes"}</button>
         </div>
@@ -627,6 +645,14 @@ export default function App() {
     await supabase.from("carriers").insert([{ name }]);
     setCarriers(c => [...c, name].sort());
   };
+ const handleDelete = async (shipmentId) => {
+    if (!window.confirm("Are you sure you want to delete this shipment? This cannot be undone.")) return;
+    await supabase.from("shipments").delete().eq("id", shipmentId);
+    setShipments(s => s.filter(sh => sh.id !== shipmentId));
+    if (selected?.id === shipmentId) setSelected(null);
+    setEditing(null);
+    setViewing(null);
+  };
 
   const isOverdue = (s) => s.status !== "Received" && new Date(s.eta) < new Date();
   const handleEditFromDetail = (s) => { setViewing(null); setEditing(s); };
@@ -708,17 +734,7 @@ export default function App() {
           {branch !== "All Branches" && <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 20, background: "linear-gradient(135deg, #0F172A, #1E3A5F)", color: "#fff", fontSize: 12, fontWeight: 600 }}>📍 {branch}</div>}
         </div>
 
-        {/* Stat Cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
-          {[{ label: "Total Shipments", count: counts.all, accent: "#0F172A" }, { label: "In Transit", count: counts["In Transit"], accent: "#3B82F6" }, { label: "Received", count: counts["Received"], accent: "#16A34A" }, { label: "Exceptions", count: counts["Exception / Issue"], accent: "#DC2626" }].map(({ label, count, accent }) => (
-            <div key={label} style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 1px 3px rgba(0,0,0,0.07)", borderLeft: `3px solid ${accent}` }}>
-              <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
-              <div style={{ fontSize: 32, fontWeight: 700, color: "#0F172A", lineHeight: 1 }}>{count}</div>
-              {branch === "All Branches" && <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>{BRANCHES.filter(b=>b!=="All Branches").map(b => { const n = label==="Total Shipments" ? shipments.filter(s=>s.branch===b).length : shipments.filter(s=>s.branch===b&&s.status===label).length; return <span key={b} style={{ marginRight: 8 }}>{b}: {n}</span>; })}</div>}
-            </div>
-          ))}
-        </div>
-
+      
         {/* Filters */}
         <div style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
           {view === "list" && (
@@ -765,7 +781,12 @@ export default function App() {
                           {win && <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>🕐 {win}</div>}
                         </td>
                         <td style={{ padding: "12px 14px" }}><StatusBadge status={s.status} /></td>
-                        {canEdit && <td style={{ padding: "12px 14px" }}><button onClick={e => { e.stopPropagation(); setEditing(s); }} style={{ padding: "5px 12px", borderRadius: 6, border: "1.5px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Edit</button></td>}
+                        {canEdit && <td style={{ padding: "12px 14px" }}>
+  <div style={{ display: "flex", gap: 6 }}>
+    <button onClick={e => { e.stopPropagation(); setEditing(s); }} style={{ padding: "5px 12px", borderRadius: 6, border: "1.5px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Edit</button>
+    <button onClick={e => { e.stopPropagation(); handleDelete(s.id); }} style={{ padding: "5px 12px", borderRadius: 6, border: "1.5px solid #FEE2E2", background: "#FEF2F2", color: "#DC2626", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Delete</button>
+  </div>
+</td>}
                       </tr>
                     );
                   })}
@@ -813,7 +834,7 @@ export default function App() {
       </div>
 
       {viewing && <DetailModal shipment={viewing} onClose={() => setViewing(null)} onEdit={handleEditFromDetail} canEdit={canEdit} />}
-      {(editing || adding) && <EditModal shipment={editing} isNew={adding} onClose={() => { setEditing(null); setAdding(false); }} onSave={handleSave}
+      {(editing || adding) && <EditModal shipment={editing} isNew={adding} onClose={() => { setEditing(null); setAdding(false); }} onSave={handleSave} onDelete={handleDelete}
         suppliers={suppliers} carriers={carriers}
         onAddSupplier={handleAddSupplier}
         onAddCarrier={handleAddCarrier}
