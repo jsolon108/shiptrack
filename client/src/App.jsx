@@ -13,17 +13,6 @@ const DEMO_ACCOUNTS = [
   { id: 5, name: "Lisa Park",       email: "l.park@company.com",      role: "viewer", branch: null,          avatar: "LP" },
 ];
 
-const SAMPLE_SHIPMENTS = [
-  { id: "SHP-001", branch: "Farmingdale", supplier: "Acme Manufacturing",   po: "PO-2024-0441", carrier: "FedEx Freight", carrierPhone: "800-463-3339", carrierContact: "Mike Torres",    tracking: "7489234701984",      eta: "2026-03-26", etaStart: "09:00", etaEnd: "11:00", pieces: "42 skids",  status: "In Transit",        notes: "" },
-  { id: "SHP-002", branch: "Farmingdale", supplier: "Global Parts Co.",     po: "PO-2024-0452", carrier: "UPS Freight",   carrierPhone: "800-742-5877", carrierContact: "Janet Webb",     tracking: "1Z999AA10123456784", eta: "2026-03-24", etaStart: "13:00", etaEnd: "15:00", pieces: "10 skids",  status: "Received",          notes: "Received in full, no damage" },
-  { id: "SHP-003", branch: "Farmingdale", supplier: "Pacific Supply Group", po: "PO-2024-0467", carrier: "XPO Logistics", carrierPhone: "800-796-9696", carrierContact: "Dave Ruiz",      tracking: "XPO992341882",       eta: "2026-03-22", etaStart: "",      etaEnd: "",      pieces: "28 pieces", status: "Exception / Issue", notes: "Customs hold – documentation requested" },
-  { id: "SHP-004", branch: "Farmingdale", supplier: "Horizon Industrial",   po: "PO-2024-0478", carrier: "Estes Express", carrierPhone: "866-378-3748", carrierContact: "Susan Hall",     tracking: "EST8834721",          eta: "2026-03-29", etaStart: "08:00", etaEnd: "10:00", pieces: "15 skids",  status: "In Transit",        notes: "" },
-  { id: "SHP-005", branch: "Bohemia",     supplier: "Acme Manufacturing",   po: "PO-2024-0491", carrier: "Old Dominion",  carrierPhone: "800-235-5569", carrierContact: "Ray Kovacs",     tracking: "OD44219938",          eta: "2026-04-01", etaStart: "10:00", etaEnd: "14:00", pieces: "60 pieces", status: "In Transit",        notes: "" },
-  { id: "SHP-006", branch: "Bohemia",     supplier: "Vertex Suppliers LLC", po: "PO-2024-0388", carrier: "FedEx Freight", carrierPhone: "800-463-3339", carrierContact: "Mike Torres",    tracking: "7489000094512",       eta: "2026-03-18", etaStart: "07:00", etaEnd: "09:00", pieces: "8 skids",   status: "Received",          notes: "1 pallet short – credit requested" },
-  { id: "SHP-007", branch: "Bohemia",     supplier: "Blue Ridge Materials", po: "PO-2024-0502", carrier: "R+L Carriers",  carrierPhone: "800-543-5589", carrierContact: "Tina Marsh",     tracking: "RL2290041",           eta: "2026-04-04", etaStart: "11:00", etaEnd: "13:00", pieces: "22 skids",  status: "In Transit",        notes: "" },
-  { id: "SHP-008", branch: "Bohemia",     supplier: "Global Parts Co.",     po: "PO-2024-0515", carrier: "UPS Freight",   carrierPhone: "800-742-5877", carrierContact: "Janet Webb",     tracking: "1Z999AA10987654321", eta: "2026-03-31", etaStart: "",      etaEnd: "",      pieces: "35 pieces", status: "Exception / Issue", notes: "Damaged in transit – claim filed" },
-];
-
 const STATUS_CONFIG = {
   "In Transit":        { color: "#2563EB", bg: "#EFF6FF", dot: "#3B82F6", calBg: "#DBEAFE", calColor: "#1D4ED8" },
   "Received":          { color: "#16A34A", bg: "#F0FDF4", dot: "#16A34A", calBg: "#DCFCE7", calColor: "#15803D" },
@@ -36,28 +25,22 @@ const DAYS_SHORT = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-// Seed lists — new entries typed by editors are added automatically
-const SEED_SUPPLIERS = [
-  "Acme Manufacturing",
-  "Global Parts Co.",
-  "Pacific Supply Group",
-  "Horizon Industrial",
-  "Vertex Suppliers LLC",
-  "Blue Ridge Materials",
-];
+const SEED_SUPPLIERS = ["Acme Manufacturing","Global Parts Co.","Pacific Supply Group","Horizon Industrial","Vertex Suppliers LLC","Blue Ridge Materials"];
+const SEED_CARRIERS  = ["FedEx Freight","UPS Freight","XPO Logistics","Estes Express","Old Dominion","R+L Carriers","Saia","ABF Freight","Southeastern Freight Lines","Peninsula Truck Lines"];
 
-const SEED_CARRIERS = [
-  "FedEx Freight",
-  "UPS Freight",
-  "XPO Logistics",
-  "Estes Express",
-  "Old Dominion",
-  "R+L Carriers",
-  "Saia",
-  "ABF Freight",
-  "Southeastern Freight Lines",
-  "Peninsula Truck Lines",
-];
+const TIME_SLOTS = (() => {
+  const slots = [{ label: "-- Select --", value: "" }];
+  for (let h = 0; h < 24; h++) {
+    for (let m of [0, 30]) {
+      const ampm = h >= 12 ? "PM" : "AM";
+      const hour = h % 12 === 0 ? 12 : h % 12;
+      const min  = m === 0 ? "00" : "30";
+      const val  = `${String(h).padStart(2,"0")}:${min}`;
+      slots.push({ label: `${hour}:${min} ${ampm}`, value: val });
+    }
+  }
+  return slots;
+})();
 
 function formatDate(d) {
   if (!d) return "—";
@@ -73,98 +56,22 @@ function formatTime(t) {
 }
 
 function formatTimeWindow(start, end) {
-  const s = formatTime(start);
-  const e = formatTime(end);
+  const s = formatTime(start), e = formatTime(end);
   if (s && e) return `${s} – ${e}`;
   if (s) return `From ${s}`;
   if (e) return `Until ${e}`;
   return null;
 }
 
-// ─── Combobox ─────────────────────────────────────────────────────────────────
-// Typeahead with "Add new" option. New values bubble up via onAddOption.
-function Combobox({ value, onChange, options, placeholder, onAddOption }) {
-  const [open, setOpen]   = useState(false);
-  const [query, setQuery] = useState(value || "");
-  const ref = useState(() => ({ current: null }))[0];
-
-  // Keep query in sync when form value changes externally (e.g. loading edit)
-  useState(() => { setQuery(value || ""); });
-
-  const filtered = useMemo(() => {
-    if (!query.trim()) return options;
-    return options.filter(o => o.toLowerCase().includes(query.toLowerCase()));
-  }, [query, options]);
-
-  const showAddNew = query.trim() && !options.some(o => o.toLowerCase() === query.trim().toLowerCase());
-
-  const select = (val) => {
-    onChange(val);
-    setQuery(val);
-    setOpen(false);
-  };
-
-  const addNew = () => {
-    const val = query.trim();
-    if (val) { onAddOption(val); select(val); }
-  };
-
-  const handleKey = (e) => {
-    if (e.key === "Escape") setOpen(false);
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (filtered.length > 0) select(filtered[0]);
-      else if (showAddNew) addNew();
-    }
-  };
-
-  return (
-    <div style={{ position: "relative" }} ref={r => ref.current = r}>
-      <div style={{ position: "relative" }}>
-        <input
-          value={query}
-          onChange={e => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 150)}
-          onKeyDown={handleKey}
-          placeholder={placeholder}
-          style={{ width: "100%", padding: "10px 36px 10px 12px", borderRadius: 8, border: `1.5px solid ${open ? "#3B82F6" : "#E2E8F0"}`, fontSize: 14, color: "#0F172A", outline: "none", boxSizing: "border-box", fontFamily: "inherit", background: "#fff", transition: "border-color 0.15s" }}
-        />
-        <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#94A3B8", fontSize: 12, pointerEvents: "none" }}>▾</span>
-      </div>
-
-      {open && (filtered.length > 0 || showAddNew) && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#fff", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", border: "1.5px solid #E2E8F0", zIndex: 999, overflow: "hidden", maxHeight: 220, overflowY: "auto" }}>
-          {filtered.map(opt => (
-            <button key={opt} onMouseDown={() => select(opt)} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: opt === value ? "#EFF6FF" : "transparent", color: opt === value ? "#2563EB" : "#0F172A", fontSize: 13, fontWeight: opt === value ? 700 : 400, cursor: "pointer", fontFamily: "inherit" }}>
-              {opt === value && <span style={{ marginRight: 6 }}>✓</span>}{opt}
-            </button>
-          ))}
-          {showAddNew && (
-            <>
-              {filtered.length > 0 && <div style={{ height: 1, background: "#F1F5F9", margin: "4px 0" }} />}
-              <button onMouseDown={addNew} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: "transparent", color: "#16A34A", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#DCFCE7", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, lineHeight: 1 }}>+</span>
-                Add "{query.trim()}"
-              </button>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Login Screen ─────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin, onMicrosoftLogin }) {
-  const [step, setStep] = useState("landing");
-  const [hovered, setHovered] = useState(null);
   const [showLocal, setShowLocal] = useState(false);
   const [localUser, setLocalUser] = useState("");
   const [localPass, setLocalPass] = useState("");
   const [localError, setLocalError] = useState("");
+  const [hovered, setHovered] = useState(null);
+  const [step, setStep] = useState("landing");
 
-  // Emergency local admin account — change these credentials as needed
   const LOCAL_ADMIN = { username: "admin", password: "Johnstone2024!" };
 
   const handleLocalLogin = () => {
@@ -191,18 +98,20 @@ function LoginScreen({ onLogin, onMicrosoftLogin }) {
                   <div style={{ fontSize: 20, fontWeight: 700, color: "#0F172A", marginBottom: 6 }}>Welcome back</div>
                   <div style={{ fontSize: 14, color: "#64748B", marginBottom: 32 }}>Sign in to access your shipment dashboard.</div>
                   <button onClick={onMicrosoftLogin} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "13px 20px", borderRadius: 10, border: "1.5px solid #E2E8F0", background: "#fff", color: "#0F172A", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-  <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
-  Sign in with Microsoft
-</button>
+                    <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
+                    Sign in with Microsoft
+                  </button>
                   <div style={{ textAlign: "center", marginTop: 24, color: "#94A3B8", fontSize: 12 }}>Microsoft Entra ID (Azure AD) · Single Sign-On</div>
-                  <div style={{ textAlign: "center", marginTop: 16 }}>
+                  <div style={{ textAlign: "center", marginTop: 12 }}>
+                    <button onClick={() => setStep("demo")} style={{ background: "none", border: "none", color: "#CBD5E1", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>Demo access</button>
+                    {" · "}
                     <button onClick={() => setShowLocal(true)} style={{ background: "none", border: "none", color: "#CBD5E1", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>Emergency access</button>
                   </div>
                 </div>
               ) : (
                 <div>
                   <div style={{ padding: "24px 28px 16px", borderBottom: "1px solid #F1F5F9" }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0F172A" }}>Choose an account</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0F172A" }}>Demo accounts</div>
                     <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>Select a demo account to preview permission levels</div>
                   </div>
                   {DEMO_ACCOUNTS.map(a => (
@@ -246,6 +155,7 @@ function LoginScreen({ onLogin, onMicrosoftLogin }) {
   );
 }
 
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || {};
   return (
@@ -255,14 +165,60 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─── Field label helper ───────────────────────────────────────────────────────
-function FieldLabel({ children }) {
-  return <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{children}</div>;
+// ─── Combobox ─────────────────────────────────────────────────────────────────
+function Combobox({ value, onChange, options, placeholder, onAddOption }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState(value || "");
+
+  useEffect(() => { setQuery(value || ""); }, [value]);
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return options;
+    return options.filter(o => o.toLowerCase().includes(query.toLowerCase()));
+  }, [query, options]);
+
+  const showAddNew = query.trim() && !options.some(o => o.toLowerCase() === query.trim().toLowerCase());
+
+  const select = (val) => { onChange(val); setQuery(val); setOpen(false); };
+  const addNew = () => { const val = query.trim(); if (val) { onAddOption(val); select(val); } };
+
+  const handleKey = (e) => {
+    if (e.key === "Escape") setOpen(false);
+    if (e.key === "Enter") { e.preventDefault(); if (filtered.length > 0) select(filtered[0]); else if (showAddNew) addNew(); }
+  };
+
+  return (
+    <div style={{ position: "relative" }}>
+      <div style={{ position: "relative" }}>
+        <input value={query} onChange={e => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)} onKeyDown={handleKey} placeholder={placeholder}
+          style={{ width: "100%", padding: "10px 36px 10px 12px", borderRadius: 8, border: `1.5px solid ${open ? "#3B82F6" : "#E2E8F0"}`, fontSize: 14, color: "#0F172A", outline: "none", boxSizing: "border-box", fontFamily: "inherit", background: "#fff" }} />
+        <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#94A3B8", fontSize: 12, pointerEvents: "none" }}>▾</span>
+      </div>
+      {open && (filtered.length > 0 || showAddNew) && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#fff", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", border: "1.5px solid #E2E8F0", zIndex: 999, overflow: "hidden", maxHeight: 220, overflowY: "auto" }}>
+          {filtered.map(opt => (
+            <button key={opt} onMouseDown={() => select(opt)} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: opt === value ? "#EFF6FF" : "transparent", color: opt === value ? "#2563EB" : "#0F172A", fontSize: 13, fontWeight: opt === value ? 700 : 400, cursor: "pointer", fontFamily: "inherit" }}>
+              {opt === value && <span style={{ marginRight: 6 }}>✓</span>}{opt}
+            </button>
+          ))}
+          {showAddNew && (
+            <>
+              {filtered.length > 0 && <div style={{ height: 1, background: "#F1F5F9", margin: "4px 0" }} />}
+              <button onMouseDown={addNew} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: "transparent", color: "#16A34A", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#DCFCE7", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>+</span>
+                Add "{query.trim()}"
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 function DetailModal({ shipment: s, onClose, onEdit, canEdit }) {
-  const window = formatTimeWindow(s.etaStart, s.etaEnd);
+  const window2 = formatTimeWindow(s.etaStart, s.etaEnd);
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
       <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 540, boxShadow: "0 25px 60px rgba(0,0,0,0.2)", overflow: "hidden", fontFamily: "'DM Sans', sans-serif" }} onClick={e => e.stopPropagation()}>
@@ -275,23 +231,28 @@ function DetailModal({ shipment: s, onClose, onEdit, canEdit }) {
         </div>
         <div style={{ padding: "24px 28px" }}>
           <div style={{ marginBottom: 18 }}><StatusBadge status={s.status} /></div>
-
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-            <div><FieldLabel>PO Number</FieldLabel><div style={{ fontSize: 13, fontFamily: "'DM Mono', monospace", color: "#0F172A" }}>{s.po}</div></div>
-            <div><FieldLabel>Pieces / Skids</FieldLabel><div style={{ fontSize: 13, color: "#0F172A", fontWeight: 600 }}>{s.pieces || "—"}</div></div>
+            {[["PO Number", s.po], ["Pieces / Skids", s.pieces || "—"], ["Carrier", s.carrier], ["Contact Name", s.carrierContact || "—"]].map(([label, val]) => (
+              <div key={label}>
+                <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: 13, color: "#0F172A", fontFamily: label.includes("PO") ? "'DM Mono', monospace" : "inherit" }}>{val}</div>
+              </div>
+            ))}
             <div>
-              <FieldLabel>Expected Delivery</FieldLabel>
+              <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Expected Delivery</div>
               <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 600 }}>{formatDate(s.eta)}</div>
-              {window && <div style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>🕐 {window}</div>}
+              {window2 && <div style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>🕐 {window2}</div>}
             </div>
-            <div><FieldLabel>Carrier</FieldLabel><div style={{ fontSize: 13, color: "#0F172A" }}>{s.carrier}</div></div>
-            <div><FieldLabel>Contact Name</FieldLabel><div style={{ fontSize: 13, color: "#0F172A" }}>{s.carrierContact || "—"}</div></div>
-            <div><FieldLabel>Phone Number</FieldLabel><div style={{ fontSize: 13, color: "#0F172A" }}>{s.carrierPhone ? <a href={`tel:${s.carrierPhone}`} style={{ color: "#2563EB", textDecoration: "none" }}>{s.carrierPhone}</a> : "—"}</div></div>
-            <div style={{ gridColumn: "1 / -1" }}><FieldLabel>Tracking #</FieldLabel><div style={{ fontSize: 13, fontFamily: "'DM Mono', monospace", color: "#94A3B8", wordBreak: "break-all" }}>{s.tracking}</div></div>
+            <div>
+              <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Phone</div>
+              {s.carrierPhone ? <a href={`tel:${s.carrierPhone}`} style={{ fontSize: 13, color: "#2563EB", textDecoration: "none" }}>{s.carrierPhone}</a> : <div style={{ fontSize: 13, color: "#0F172A" }}>—</div>}
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Tracking #</div>
+              <div style={{ fontSize: 13, fontFamily: "'DM Mono', monospace", color: "#94A3B8", wordBreak: "break-all" }}>{s.tracking}</div>
+            </div>
           </div>
-
           {s.notes && <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 8, fontSize: 13, color: "#475569", marginBottom: 16 }}><span style={{ fontWeight: 600, color: "#64748B" }}>Notes: </span>{s.notes}</div>}
-
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <button onClick={onClose} style={{ padding: "9px 20px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Close</button>
             {canEdit && <button onClick={() => onEdit(s)} style={{ padding: "9px 20px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0F172A, #1E3A5F)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Edit Shipment</button>}
@@ -301,21 +262,8 @@ function DetailModal({ shipment: s, onClose, onEdit, canEdit }) {
     </div>
   );
 }
-// ─── Edit Modal ───────────────────────────────────────────────────────────────
-const TIME_SLOTS = (() => {
-  const slots = [{ label: "-- Select --", value: "" }];
-  for (let h = 0; h < 24; h++) {
-    for (let m of [0, 30]) {
-      const ampm = h >= 12 ? "PM" : "AM";
-      const hour = h % 12 === 0 ? 12 : h % 12;
-      const min  = m === 0 ? "00" : "30";
-      const val  = `${String(h).padStart(2,"0")}:${min}`;
-      slots.push({ label: `${hour}:${min} ${ampm}`, value: val });
-    }
-  }
-  return slots;
-})();
 
+// ─── Edit Modal ───────────────────────────────────────────────────────────────
 function EditModal({ shipment, onClose, onSave, onDelete, isNew, suppliers, carriers, onAddSupplier, onAddCarrier }) {
   const blank = { branch: "Farmingdale", supplier: "", po: "", carrier: "", carrierPhone: "", carrierContact: "", tracking: "", pieces: "", eta: "", etaStart: "", etaEnd: "", status: "In Transit", notes: "" };
   const [form, setForm] = useState(shipment || blank);
@@ -326,7 +274,6 @@ function EditModal({ shipment, onClose, onSave, onDelete, isNew, suppliers, carr
   const labelStyle = { display: "block", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 };
   const errStyle   = { fontSize: 11, color: "#DC2626", marginTop: 4, fontWeight: 600 };
   const req = <span style={{ color: "#DC2626" }}> *</span>;
-
   const borderErr = (k) => ({ ...inputStyle, borderColor: errors[k] ? "#DC2626" : "#E2E8F0" });
 
   const validate = () => {
@@ -353,29 +300,21 @@ function EditModal({ shipment, onClose, onSave, onDelete, isNew, suppliers, carr
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
       <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 580, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 25px 60px rgba(0,0,0,0.18)", fontFamily: "'DM Sans', sans-serif", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
-
-        {/* Fixed header */}
         <div style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)", padding: "22px 28px", flexShrink: 0 }}>
           <div style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#94A3B8", marginBottom: 4 }}>{isNew ? "New Shipment" : `Editing ${form.id}`}</div>
           <div style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>{isNew ? "Add Shipment" : "Edit Shipment"}</div>
         </div>
-
-        {/* Scrollable body */}
         <div style={{ overflowY: "auto", flex: 1, padding: "24px 28px", display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* Branch */}
           <div>
             <label style={labelStyle}>Branch{req}</label>
             <select value={form.branch} onChange={e => set("branch", e.target.value)} style={inputStyle}>
               {BRANCHES.filter(b => b !== "All Branches").map(b => <option key={b}>{b}</option>)}
             </select>
           </div>
-
-          {/* Supplier + PO */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div>
               <label style={labelStyle}>Supplier / Vendor{req}</label>
-              <Combobox value={form.supplier} onChange={v => set("supplier", v)} options={suppliers} placeholder="e.g. Acme Manufacturing" onAddOption={onAddSupplier} error={errors.supplier} />
+              <Combobox value={form.supplier} onChange={v => set("supplier", v)} options={suppliers} placeholder="e.g. Acme Manufacturing" onAddOption={onAddSupplier} />
               {errors.supplier && <div style={errStyle}>⚠ {errors.supplier}</div>}
             </div>
             <div>
@@ -384,21 +323,15 @@ function EditModal({ shipment, onClose, onSave, onDelete, isNew, suppliers, carr
               {errors.po && <div style={errStyle}>⚠ {errors.po}</div>}
             </div>
           </div>
-
-          {/* Pieces */}
           <div>
             <label style={labelStyle}>Pieces / Skids</label>
             <input value={form.pieces} onChange={e => set("pieces", e.target.value)} placeholder="e.g. 42 skids, 10 pieces" style={inputStyle} />
           </div>
-
-          {/* Carrier */}
           <div>
             <label style={labelStyle}>Carrier{req}</label>
-            <Combobox value={form.carrier} onChange={v => set("carrier", v)} options={carriers} placeholder="e.g. FedEx Freight" onAddOption={onAddCarrier} error={errors.carrier} />
+            <Combobox value={form.carrier} onChange={v => set("carrier", v)} options={carriers} placeholder="e.g. FedEx Freight" onAddOption={onAddCarrier} />
             {errors.carrier && <div style={errStyle}>⚠ {errors.carrier}</div>}
           </div>
-
-          {/* Contact + Phone */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div>
               <label style={labelStyle}>Contact Name</label>
@@ -409,15 +342,11 @@ function EditModal({ shipment, onClose, onSave, onDelete, isNew, suppliers, carr
               <input value={form.carrierPhone} onChange={e => set("carrierPhone", e.target.value)} placeholder="e.g. 800-463-3339" style={inputStyle} />
             </div>
           </div>
-
-          {/* Tracking */}
           <div>
             <label style={labelStyle}>Tracking Number{req}</label>
             <input value={form.tracking} onChange={e => set("tracking", e.target.value)} placeholder="e.g. 7489234701984" style={borderErr("tracking")} />
             {errors.tracking && <div style={errStyle}>⚠ {errors.tracking}</div>}
           </div>
-
-          {/* Expected Delivery */}
           <div>
             <label style={labelStyle}>Expected Delivery</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
@@ -438,23 +367,17 @@ function EditModal({ shipment, onClose, onSave, onDelete, isNew, suppliers, carr
               </div>
             </div>
           </div>
-
-          {/* Status */}
           <div>
             <label style={labelStyle}>Status</label>
             <select value={form.status} onChange={e => set("status", e.target.value)} style={inputStyle}>
               {STATUSES.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
-
-          {/* Notes */}
           <div>
             <label style={labelStyle}>Notes</label>
             <textarea value={form.notes} onChange={e => set("notes", e.target.value)} rows={3} placeholder="Any additional notes..." style={{ ...inputStyle, resize: "vertical" }} />
           </div>
         </div>
-
-        {/* Fixed footer */}
         <div style={{ padding: "16px 28px", borderTop: "1px solid #F1F5F9", display: "flex", gap: 10, justifyContent: "flex-end", flexShrink: 0, background: "#fff" }}>
           {!isNew && onDelete && (
             <button onClick={() => onDelete(form.id)} style={{ padding: "10px 20px", borderRadius: 8, border: "1.5px solid #FEE2E2", background: "#FEF2F2", color: "#DC2626", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginRight: "auto" }}>Delete Shipment</button>
@@ -472,15 +395,13 @@ function CalendarView({ shipments, onSelectShipment }) {
   const today = new Date();
   const [calYear, setCalYear]   = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
-  const [calMode, setCalMode]   = useState("month"); // "month" | "week"
-  const [weekOffset, setWeekOffset] = useState(0);   // 0 = current week
+  const [calMode, setCalMode]   = useState("month");
+  const [weekOffset, setWeekOffset] = useState(0);
 
-  // ── Month helpers ──
   const firstDay    = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const totalCells  = Math.ceil((firstDay + daysInMonth) / 7) * 7;
 
-  // ── Week helpers ──
   const getWeekStart = (offset) => {
     const d = new Date(today);
     d.setDate(today.getDate() - today.getDay() + offset * 7);
@@ -488,11 +409,7 @@ function CalendarView({ shipments, onSelectShipment }) {
     return d;
   };
   const weekStart = getWeekStart(weekOffset);
-  const weekDays  = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    return d;
-  });
+  const weekDays  = Array.from({ length: 7 }, (_, i) => { const d = new Date(weekStart); d.setDate(weekStart.getDate() + i); return d; });
   const weekLabel = () => {
     const s = weekDays[0], e = weekDays[6];
     if (s.getMonth() === e.getMonth()) return `${MONTHS[s.getMonth()]} ${s.getDate()}–${e.getDate()}, ${s.getFullYear()}`;
@@ -506,6 +423,8 @@ function CalendarView({ shipments, onSelectShipment }) {
   }, [shipments]);
 
   const toDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const prevMonth = () => { if (calMonth === 0) { setCalMonth(11); setCalYear(y=>y-1); } else setCalMonth(m=>m-1); };
+  const nextMonth = () => { if (calMonth === 11) { setCalMonth(0); setCalYear(y=>y+1); } else setCalMonth(m=>m+1); };
 
   const ShipChip = ({ s }) => {
     const cfg = STATUS_CONFIG[s.status] || {};
@@ -519,9 +438,6 @@ function CalendarView({ shipments, onSelectShipment }) {
     );
   };
 
-  const prevMonth = () => { if (calMonth === 0) { setCalMonth(11); setCalYear(y=>y-1); } else setCalMonth(m=>m-1); };
-  const nextMonth = () => { if (calMonth === 11) { setCalMonth(0); setCalYear(y=>y+1); } else setCalMonth(m=>m+1); };
-
   const monthCells = Array.from({ length: totalCells }, (_, i) => {
     const dayNum = i - firstDay + 1;
     if (dayNum < 1 || dayNum > daysInMonth) return null;
@@ -533,24 +449,19 @@ function CalendarView({ shipments, onSelectShipment }) {
 
   return (
     <div>
-      {/* Calendar nav */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <button onClick={calMode === "month" ? prevMonth : () => setWeekOffset(o=>o-1)} style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#475569", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>‹</button>
+        <button onClick={calMode==="month" ? prevMonth : () => setWeekOffset(o=>o-1)} style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#475569", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>‹</button>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>
-            {calMode === "month" ? `${MONTHS[calMonth]} ${calYear}` : weekLabel()}
-          </div>
-          {/* Month / Week toggle */}
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>{calMode==="month" ? `${MONTHS[calMonth]} ${calYear}` : weekLabel()}</div>
           <div style={{ display: "flex", background: "#F1F5F9", borderRadius: 8, padding: 3, gap: 2 }}>
             {[["month","Month"],["week","Week"]].map(([m,l]) => (
-              <button key={m} onClick={() => setCalMode(m)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: calMode===m ? "#fff" : "transparent", color: calMode===m ? "#0F172A" : "#94A3B8", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: calMode===m ? "0 1px 3px rgba(0,0,0,0.08)" : "none" }}>{l}</button>
+              <button key={m} onClick={() => setCalMode(m)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: calMode===m ? "#fff" : "transparent", color: calMode===m ? "#0F172A" : "#94A3B8", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
             ))}
           </div>
         </div>
-        <button onClick={calMode === "month" ? nextMonth : () => setWeekOffset(o=>o+1)} style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#475569", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>›</button>
+        <button onClick={calMode==="month" ? nextMonth : () => setWeekOffset(o=>o+1)} style={{ padding: "7px 14px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#475569", fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>›</button>
       </div>
 
-      {/* ── MONTH VIEW ── */}
       {calMode === "month" && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 3 }}>
@@ -573,7 +484,6 @@ function CalendarView({ shipments, onSelectShipment }) {
         </>
       )}
 
-      {/* ── WEEK VIEW ── */}
       {calMode === "week" && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 3 }}>
@@ -593,10 +503,7 @@ function CalendarView({ shipments, onSelectShipment }) {
               const ships = shipmentsByDate[toDateStr(d)] || [];
               return (
                 <div key={i} style={{ minHeight: 160, background: isToday ? "#F0F7FF" : "#FAFBFC", borderRadius: 10, border: isToday ? "2px solid #3B82F6" : "1.5px solid #E2E8F0", padding: "10px 7px", boxSizing: "border-box" }}>
-                  {ships.length === 0
-                    ? <div style={{ fontSize: 11, color: "#E2E8F0", textAlign: "center", marginTop: 20 }}>—</div>
-                    : ships.map(s => <ShipChip key={s.id} s={s} />)
-                  }
+                  {ships.length === 0 ? <div style={{ fontSize: 11, color: "#E2E8F0", textAlign: "center", marginTop: 20 }}>—</div> : ships.map(s => <ShipChip key={s.id} s={s} />)}
                 </div>
               );
             })}
@@ -604,7 +511,6 @@ function CalendarView({ shipments, onSelectShipment }) {
         </>
       )}
 
-      {/* Legend */}
       <div style={{ display: "flex", gap: 16, marginTop: 16, flexWrap: "wrap", alignItems: "center" }}>
         {STATUSES.map(s => { const cfg = STATUS_CONFIG[s]; return <div key={s} style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: cfg.calBg, border: `1.5px solid ${cfg.calColor}`, flexShrink: 0 }} /><span style={{ fontSize: 11, color: "#64748B", fontWeight: 600 }}>{s}</span></div>; })}
         <div style={{ marginLeft: "auto", fontSize: 11, color: "#94A3B8" }}>Click any shipment to view details</div>
@@ -620,21 +526,6 @@ export default function App() {
   const [suppliers, setSuppliers]     = useState(SEED_SUPPLIERS);
   const [carriers, setCarriers]       = useState(SEED_CARRIERS);
   const [loading, setLoading]         = useState(true);
-
-  useEffect(() => {
-    if (!currentUser) return;
-    const fetchData = async () => {
-      setLoading(true);
-      const { data: shipData } = await supabase.from("shipments").select("*");
-      const { data: supData }  = await supabase.from("suppliers").select("name");
-      const { data: carData }  = await supabase.from("carriers").select("name");
-      if (shipData) setShipments(shipData);
-      if (supData && supData.length > 0) setSuppliers(supData.map(r => r.name));
-      if (carData && carData.length > 0) setCarriers(carData.map(r => r.name));
-      setLoading(false);
-    };
-    fetchData();
-  }, [currentUser]);
   const [branch, setBranch]           = useState("All Branches");
   const [search, setSearch]           = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -645,11 +536,9 @@ export default function App() {
   const [view, setView]               = useState("list");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const canEdit = currentUser?.role === "editor";
+  const { instance } = useMsal();
 
- const handleLogin = (a) => { setCurrentUser(a); if (a.branch) setBranch(a.branch); };
-  const { instance, accounts } = useMsal();
-
+  // Handle Microsoft redirect response
   useEffect(() => {
     instance.handleRedirectPromise().then(result => {
       if (result) {
@@ -667,6 +556,27 @@ export default function App() {
     }).catch(e => console.error(e));
   }, [instance]);
 
+  // Load data from Supabase when user logs in
+  useEffect(() => {
+    if (!currentUser) return;
+    const fetchData = async () => {
+      setLoading(true);
+      const { data: shipData } = await supabase.from("shipments").select("*");
+      const { data: supData }  = await supabase.from("suppliers").select("name");
+      const { data: carData }  = await supabase.from("carriers").select("name");
+      if (shipData) setShipments(shipData);
+      if (supData && supData.length > 0) setSuppliers(supData.map(r => r.name));
+      if (carData && carData.length > 0) setCarriers(carData.map(r => r.name));
+      setLoading(false);
+    };
+    fetchData();
+  }, [currentUser]);
+
+  const canEdit = currentUser?.role === "editor";
+
+  const handleLogin  = (a) => { setCurrentUser(a); if (a.branch) setBranch(a.branch); };
+  const handleLogout = () => { setCurrentUser(null); setBranch("All Branches"); setUserMenuOpen(false); setSelected(null); instance.logoutRedirect().catch(e => console.error(e)); };
+
   const handleMicrosoftLogin = async () => {
     try {
       await instance.loginRedirect(loginRequest);
@@ -675,17 +585,7 @@ export default function App() {
     }
   };
 
-  };
-  const handleLogout = () => { setCurrentUser(null); setBranch("All Branches"); setUserMenuOpen(false); setSelected(null); };
-
   const branchShipments = useMemo(() => branch === "All Branches" ? shipments : shipments.filter(s => s.branch === branch), [shipments, branch]);
-
-  const counts = useMemo(() => ({
-    all: branchShipments.length,
-    "In Transit": branchShipments.filter(s => s.status === "In Transit").length,
-    "Received":   branchShipments.filter(s => s.status === "Received").length,
-    "Exception / Issue": branchShipments.filter(s => s.status === "Exception / Issue").length,
-  }), [branchShipments]);
 
   const filtered = useMemo(() => branchShipments.filter(s => {
     const q = search.toLowerCase();
@@ -716,7 +616,8 @@ export default function App() {
     await supabase.from("carriers").insert([{ name }]);
     setCarriers(c => [...c, name].sort());
   };
- const handleDelete = async (shipmentId) => {
+
+  const handleDelete = async (shipmentId) => {
     if (!window.confirm("Are you sure you want to delete this shipment? This cannot be undone.")) return;
     await supabase.from("shipments").delete().eq("id", shipmentId);
     setShipments(s => s.filter(sh => sh.id !== shipmentId));
@@ -729,14 +630,10 @@ export default function App() {
   const handleEditFromDetail = (s) => { setViewing(null); setEditing(s); };
 
   if (!currentUser) return (
-    <><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" /><LoginScreen onLogin={handleLogin} onMicrosoftLogin={handleMicrosoftLogin} /></>
-  );
-
-  const inputRow = (label, val, extra) => (
-    <div key={label}>
-      <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 13, color: "#0F172A", ...extra }}>{val || "—"}</div>
-    </div>
+    <>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+      <LoginScreen onLogin={handleLogin} onMicrosoftLogin={handleMicrosoftLogin} />
+    </>
   );
 
   return (
@@ -747,12 +644,12 @@ export default function App() {
       <div style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)", padding: "0 32px" }}>
         <div style={{ maxWidth: 1300, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-  <img src="/logo.png" alt="Johnstone Supply" style={{ height: 44, width: "auto" }} />
-  <div>
-    <div style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>Johnstone Supply ShipTrack</div>
-    <div style={{ color: "#94A3B8", fontSize: 11, letterSpacing: "0.06em" }}>INBOUND LOGISTICS</div>
-  </div>
-</div>
+            <img src="/logo.png" alt="Johnstone Supply" style={{ height: 44, width: "auto" }} />
+            <div>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>Johnstone Supply ShipTrack</div>
+              <div style={{ color: "#94A3B8", fontSize: 11, letterSpacing: "0.06em" }}>INBOUND LOGISTICS</div>
+            </div>
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ display: "flex", background: "rgba(255,255,255,0.1)", borderRadius: 8, padding: 3, gap: 2 }}>
               {[["list","≡  List"],["calendar","⊞  Calendar"]].map(([v,l]) => (
@@ -805,7 +702,6 @@ export default function App() {
           {branch !== "All Branches" && <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 20, background: "linear-gradient(135deg, #0F172A, #1E3A5F)", color: "#fff", fontSize: 12, fontWeight: 600 }}>📍 {branch}</div>}
         </div>
 
-      
         {/* Filters */}
         <div style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
           {view === "list" && (
@@ -824,48 +720,53 @@ export default function App() {
         {/* LIST VIEW */}
         {view === "list" && (
           <>
-            <div style={{ background: "#fff", borderRadius: 14, boxShadow: "0 1px 3px rgba(0,0,0,0.07)", overflow: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
-                <thead>
-                  <tr style={{ background: "#F8FAFC", borderBottom: "1.5px solid #E2E8F0" }}>
-                    {["ID", ...(branch==="All Branches" ? ["Branch"] : []), "Supplier", "PO #", "Pieces/Skids", "Carrier", "Contact", "Phone", "Delivery Window", "Status", ...(canEdit ? [""] : [])].map(h => (
-                      <th key={h} style={{ padding: "12px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94A3B8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.length === 0 && <tr><td colSpan={12} style={{ padding: 48, textAlign: "center", color: "#94A3B8", fontSize: 14 }}>No shipments found.</td></tr>}
-                  {filtered.map((s, i) => {
-                    const win = formatTimeWindow(s.etaStart, s.etaEnd);
-                    return (
-                      <tr key={s.id} onClick={() => setSelected(selected?.id===s.id ? null : s)} style={{ borderBottom: "1px solid #F1F5F9", background: selected?.id===s.id ? "#F8FAFF" : i%2===0 ? "#fff" : "#FAFBFC", cursor: "pointer" }}>
-                        <td style={{ padding: "12px 14px" }}><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#64748B" }}>{s.id}</span></td>
-                        {branch === "All Branches" && <td style={{ padding: "12px 14px" }}><span style={{ padding: "3px 8px", borderRadius: 6, background: "#F1F5F9", color: "#475569", fontSize: 11, fontWeight: 700 }}>{s.branch}</span></td>}
-                        <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{s.supplier}</td>
-                        <td style={{ padding: "12px 14px" }}><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#475569" }}>{s.po}</span></td>
-                        <td style={{ padding: "12px 14px", fontSize: 12, color: "#475569", fontWeight: 600 }}>{s.pieces || "—"}</td>
-                        <td style={{ padding: "12px 14px", fontSize: 12, color: "#475569" }}>{s.carrier}</td>
-                        <td style={{ padding: "12px 14px", fontSize: 12, color: "#475569" }}>{s.carrierContact || "—"}</td>
-                        <td style={{ padding: "12px 14px", fontSize: 12 }}>{s.carrierPhone ? <a href={`tel:${s.carrierPhone}`} style={{ color: "#2563EB", textDecoration: "none" }} onClick={e=>e.stopPropagation()}>{s.carrierPhone}</a> : "—"}</td>
-                        <td style={{ padding: "12px 14px" }}>
-                          <div style={{ fontSize: 12, color: isOverdue(s) ? "#DC2626" : "#0F172A", fontWeight: 600 }}>{formatDate(s.eta)}{isOverdue(s) ? " ⚠" : ""}</div>
-                          {win && <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>🕐 {win}</div>}
-                        </td>
-                        <td style={{ padding: "12px 14px" }}><StatusBadge status={s.status} /></td>
-                        {canEdit && <td style={{ padding: "12px 14px" }}>
-  <div style={{ display: "flex", gap: 6 }}>
-    <button onClick={e => { e.stopPropagation(); setEditing(s); }} style={{ padding: "5px 12px", borderRadius: 6, border: "1.5px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Edit</button>
-    <button onClick={e => { e.stopPropagation(); handleDelete(s.id); }} style={{ padding: "5px 12px", borderRadius: 6, border: "1.5px solid #FEE2E2", background: "#FEF2F2", color: "#DC2626", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Delete</button>
-  </div>
-</td>}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            {loading ? (
+              <div style={{ textAlign: "center", padding: 48, color: "#94A3B8", fontSize: 14 }}>Loading shipments...</div>
+            ) : (
+              <div style={{ background: "#fff", borderRadius: 14, boxShadow: "0 1px 3px rgba(0,0,0,0.07)", overflow: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+                  <thead>
+                    <tr style={{ background: "#F8FAFC", borderBottom: "1.5px solid #E2E8F0" }}>
+                      {["ID", ...(branch==="All Branches" ? ["Branch"] : []), "Supplier", "PO #", "Pieces/Skids", "Carrier", "Contact", "Phone", "Delivery Window", "Status", ...(canEdit ? [""] : [])].map(h => (
+                        <th key={h} style={{ padding: "12px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94A3B8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 && <tr><td colSpan={12} style={{ padding: 48, textAlign: "center", color: "#94A3B8", fontSize: 14 }}>No shipments found.</td></tr>}
+                    {filtered.map((s, i) => {
+                      const win = formatTimeWindow(s.etaStart, s.etaEnd);
+                      return (
+                        <tr key={s.id} onClick={() => setSelected(selected?.id===s.id ? null : s)} style={{ borderBottom: "1px solid #F1F5F9", background: selected?.id===s.id ? "#F8FAFF" : i%2===0 ? "#fff" : "#FAFBFC", cursor: "pointer" }}>
+                          <td style={{ padding: "12px 14px" }}><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#64748B" }}>{s.id}</span></td>
+                          {branch === "All Branches" && <td style={{ padding: "12px 14px" }}><span style={{ padding: "3px 8px", borderRadius: 6, background: "#F1F5F9", color: "#475569", fontSize: 11, fontWeight: 700 }}>{s.branch}</span></td>}
+                          <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{s.supplier}</td>
+                          <td style={{ padding: "12px 14px" }}><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#475569" }}>{s.po}</span></td>
+                          <td style={{ padding: "12px 14px", fontSize: 12, color: "#475569", fontWeight: 600 }}>{s.pieces || "—"}</td>
+                          <td style={{ padding: "12px 14px", fontSize: 12, color: "#475569" }}>{s.carrier}</td>
+                          <td style={{ padding: "12px 14px", fontSize: 12, color: "#475569" }}>{s.carrierContact || "—"}</td>
+                          <td style={{ padding: "12px 14px", fontSize: 12 }}>{s.carrierPhone ? <a href={`tel:${s.carrierPhone}`} style={{ color: "#2563EB", textDecoration: "none" }} onClick={e=>e.stopPropagation()}>{s.carrierPhone}</a> : "—"}</td>
+                          <td style={{ padding: "12px 14px" }}>
+                            <div style={{ fontSize: 12, color: isOverdue(s) ? "#DC2626" : "#0F172A", fontWeight: 600 }}>{formatDate(s.eta)}{isOverdue(s) ? " ⚠" : ""}</div>
+                            {win && <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>🕐 {win}</div>}
+                          </td>
+                          <td style={{ padding: "12px 14px" }}><StatusBadge status={s.status} /></td>
+                          {canEdit && (
+                            <td style={{ padding: "12px 14px" }}>
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <button onClick={e => { e.stopPropagation(); setEditing(s); }} style={{ padding: "5px 12px", borderRadius: 6, border: "1.5px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Edit</button>
+                                <button onClick={e => { e.stopPropagation(); handleDelete(s.id); }} style={{ padding: "5px 12px", borderRadius: 6, border: "1.5px solid #FEE2E2", background: "#FEF2F2", color: "#DC2626", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Delete</button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-            {/* Inline detail panel */}
             {selected && (
               <div style={{ marginTop: 16, background: "#fff", borderRadius: 14, boxShadow: "0 1px 3px rgba(0,0,0,0.07)", padding: "20px 24px", borderLeft: `4px solid ${STATUS_CONFIG[selected.status]?.dot}` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
@@ -876,17 +777,16 @@ export default function App() {
                   <StatusBadge status={selected.status} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
-                  {inputRow("PO Number", selected.po, { fontFamily: "'DM Mono', monospace" })}
-                  {inputRow("Pieces / Skids", selected.pieces, { fontWeight: 600 })}
+                  {[["PO Number", selected.po], ["Pieces / Skids", selected.pieces || "—"], ["Carrier", selected.carrier], ["Contact", selected.carrierContact || "—"]].map(([label, val]) => (
+                    <div key={label}>
+                      <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
+                      <div style={{ fontSize: 13, color: "#0F172A", fontFamily: label.includes("PO") ? "'DM Mono', monospace" : "inherit" }}>{val}</div>
+                    </div>
+                  ))}
                   <div>
                     <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Delivery Window</div>
                     <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 600 }}>{formatDate(selected.eta)}</div>
                     {formatTimeWindow(selected.etaStart, selected.etaEnd) && <div style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>🕐 {formatTimeWindow(selected.etaStart, selected.etaEnd)}</div>}
-                  </div>
-                  {inputRow("Contact", selected.carrierContact)}
-                  <div>
-                    <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Phone</div>
-                    {selected.carrierPhone ? <a href={`tel:${selected.carrierPhone}`} style={{ fontSize: 13, color: "#2563EB", textDecoration: "none" }}>{selected.carrierPhone}</a> : <div style={{ fontSize: 13, color: "#0F172A" }}>—</div>}
                   </div>
                 </div>
                 {selected.notes && <div style={{ marginTop: 14, padding: "10px 14px", background: "#F8FAFC", borderRadius: 8, fontSize: 13, color: "#475569" }}><span style={{ fontWeight: 600, color: "#64748B" }}>Notes: </span>{selected.notes}</div>}
@@ -905,11 +805,7 @@ export default function App() {
       </div>
 
       {viewing && <DetailModal shipment={viewing} onClose={() => setViewing(null)} onEdit={handleEditFromDetail} canEdit={canEdit} />}
-      {(editing || adding) && <EditModal shipment={editing} isNew={adding} onClose={() => { setEditing(null); setAdding(false); }} onSave={handleSave} onDelete={handleDelete}
-        suppliers={suppliers} carriers={carriers}
-        onAddSupplier={handleAddSupplier}
-        onAddCarrier={handleAddCarrier}
-      />}
+      {(editing || adding) && <EditModal shipment={editing} isNew={adding} onClose={() => { setEditing(null); setAdding(false); }} onSave={handleSave} onDelete={handleDelete} suppliers={suppliers} carriers={carriers} onAddSupplier={handleAddSupplier} onAddCarrier={handleAddCarrier} />}
     </div>
   );
 }
