@@ -545,16 +545,17 @@ export default function App() {
   // Handle Microsoft redirect response
   useEffect(() => {
     instance.handleRedirectPromise().then(result => {
-      if (result) {
-        const groups = result.idTokenClaims?.groups || [];
+      const account = result?.account || instance.getAllAccounts()[0];
+      if (account) {
+        const groups = result?.idTokenClaims?.groups || account.idTokenClaims?.groups || [];
         const isEditor = groups.includes(EDITOR_GROUP_ID);
         setCurrentUser({
-          id: result.account.localAccountId,
-          name: result.account.name,
-          email: result.account.username,
+          id: account.localAccountId,
+          name: account.name,
+          email: account.username,
           role: isEditor ? "editor" : "viewer",
           branch: null,
-          avatar: result.account.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
+          avatar: account.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
         });
       }
     }).catch(e => console.error(e));
