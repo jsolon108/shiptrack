@@ -530,7 +530,7 @@ export default function App() {
   const [suppliers, setSuppliers]     = useState(SEED_SUPPLIERS);
   const [carriers, setCarriers]       = useState(SEED_CARRIERS);
   const [loading, setLoading]         = useState(true);
-  const [branch, setBranch]           = useState("All Branches");
+  const [branch, setBranch] = useState(() => localStorage.getItem("shiptrack_branch") || "All Branches");
   const [search, setSearch]           = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
   const [editing, setEditing]         = useState(null);
@@ -703,7 +703,7 @@ export default function App() {
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.04em" }}>Branch</span>
           <div style={{ position: "relative" }}>
-            <select value={branch} onChange={e => { setBranch(e.target.value); setSelected(null); setFilterStatus("All"); }} style={{ appearance: "none", WebkitAppearance: "none", padding: "9px 36px 9px 14px", borderRadius: 10, border: "1.5px solid #CBD5E1", background: "#fff", color: "#0F172A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", outline: "none", minWidth: 180 }}>
+            <select value={branch} onChange={e => { setBranch(e.target.value); setSelected(null); setFilterStatus("All"); localStorage.setItem("shiptrack_branch", e.target.value); }} style={{ appearance: "none", WebkitAppearance: "none", padding: "9px 36px 9px 14px", borderRadius: 10, border: "1.5px solid #CBD5E1", background: "#fff", color: "#0F172A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", outline: "none", minWidth: 180 }}>
               {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
             <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#64748B", fontSize: 12 }}>▾</span>
