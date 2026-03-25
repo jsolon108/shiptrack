@@ -435,6 +435,7 @@ function CalendarView({ shipments, onSelectShipment }) {
     return (
       <button onClick={() => onSelectShipment(s)} style={{ display: "block", width: "100%", textAlign: "left", padding: "4px 7px", borderRadius: 5, background: cfg.calBg, color: cfg.calColor, border: `1px solid ${cfg.calColor}22`, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.4, overflow: "hidden", marginBottom: 3 }}>
         <div style={{ fontSize: 10, fontWeight: 700, textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "hidden" }}>📦 {s.supplier}</div>
+<div style={{ fontSize: 9, fontWeight: 600, opacity: 0.85, marginTop: 1 }}>📍 {s.branch}</div>
         {win && <div style={{ fontSize: 9, fontWeight: 600, opacity: 0.85, marginTop: 1 }}>🕐 {win}</div>}
         {s.pieces && <div style={{ fontSize: 9, opacity: 0.75, marginTop: 1 }}>📋 {s.pieces}</div>}
       </button>
