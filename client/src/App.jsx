@@ -30,8 +30,8 @@ const SEED_CARRIERS  = ["FedEx Freight","UPS Freight","XPO Logistics","Estes Exp
 
 const TIME_SLOTS = (() => {
   const slots = [{ label: "-- Select --", value: "" }];
-  for (let h = 0; h < 24; h++) {
-    for (let m of [0, 30]) {
+  for (let h = 7; h <= 17; h++) {
+    for (let m of [0]) {
       const ampm = h >= 12 ? "PM" : "AM";
       const hour = h % 12 === 0 ? 12 : h % 12;
       const min  = m === 0 ? "00" : "30";
