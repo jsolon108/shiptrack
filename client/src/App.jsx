@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { supabase } from "./supabase";
 import { useMsal } from "@azure/msal-react";
 import { loginRequest, EDITOR_GROUP_ID } from "./authConfig";
+import { Analytics } from "@vercel/analytics/react";
 
 const BRANCHES = ["All Branches", "Farmingdale", "Bohemia", "Bohemia - Aero", "Milford"];
 
@@ -849,6 +850,7 @@ export default function App() {
 
       {viewing && <DetailModal shipment={viewing} onClose={() => setViewing(null)} onEdit={handleEditFromDetail} onMarkReceived={handleMarkReceived} canEdit={canEdit} />}
       {(editing || adding) && <EditModal shipment={editing} isNew={adding} onClose={() => { setEditing(null); setAdding(false); }} onSave={handleSave} onDelete={handleDelete} suppliers={suppliers} carriers={carriers} onAddSupplier={handleAddSupplier} onAddCarrier={handleAddCarrier} />}
+      <Analytics />
     </div>
   );
 }
