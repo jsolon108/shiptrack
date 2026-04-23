@@ -5,6 +5,19 @@ import { loginRequest, EDITOR_GROUP_ID } from "./authConfig";
 
 const BRANCHES = ["All Branches", "Farmingdale", "Bohemia", "Bohemia - Aero", "Milford"];
 
+const toTitleCase = (str) => {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map(word => {
+      if (!word) return word;
+      // Preserve all-caps acronyms 3 chars or fewer (e.g. UPS, FedEx stays as user typed if mixed)
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
+};
+
 const DEMO_ACCOUNTS = [
   { id: 1, name: "Sarah Mitchell",  email: "s.mitchell@company.com",  role: "editor", branch: null,          avatar: "SM" },
   { id: 2, name: "James Kowalski",  email: "j.kowalski@company.com",  role: "editor", branch: null,          avatar: "JK" },
@@ -180,7 +193,7 @@ function Combobox({ value, onChange, options, placeholder, onAddOption }) {
   const showAddNew = query.trim() && !options.some(o => o.toLowerCase() === query.trim().toLowerCase());
 
   const select = (val) => { onChange(val); setQuery(val); setOpen(false); };
-  const addNew = () => { const val = query.trim(); if (val) { onAddOption(val); select(val); } };
+  const addNew = () => { const val = toTitleCase(query.trim()); if (val) { onAddOption(val); select(val); } };
 
   const handleKey = (e) => {
     if (e.key === "Escape") setOpen(false);
@@ -600,6 +613,15 @@ export default function App() {
 
   const handleSave = async (form) => {
     if (adding) {
+      // Validate supplier and carrier are in the database (not free-form unsaved values)
+      if (form.supplier && !suppliers.some(s => s.toLowerCase() === form.supplier.toLowerCase())) {
+        alert(`Supplier "${form.supplier}" is not in the database. Please pick one from the list, or click "Add" in the dropdown to add it first.`);
+        return;
+      }
+      if (form.carrier && !carriers.some(c => c.toLowerCase() === form.carrier.toLowerCase())) {
+        alert(`Carrier "${form.carrier}" is not in the database. Please pick one from the list, or click "Add" in the dropdown to add it first.`);
+        return;
+      }
       const { id, ...formWithoutId } = form;
       const { data, error } = await supabase
         .from("shipments")
@@ -619,12 +641,16 @@ export default function App() {
     }
   };
 
-  const handleAddSupplier = async (name) => {
+  const handleAddSupplier = async (rawName) => {
+    const name = toTitleCase(rawName);
+    if (suppliers.some(s => s.toLowerCase() === name.toLowerCase())) return;
     await supabase.from("suppliers").insert([{ name }]);
     setSuppliers(s => [...s, name].sort());
   };
 
-  const handleAddCarrier = async (name) => {
+  const handleAddCarrier = async (rawName) => {
+    const name = toTitleCase(rawName);
+    if (carriers.some(c => c.toLowerCase() === name.toLowerCase())) return;
     await supabase.from("carriers").insert([{ name }]);
     setCarriers(c => [...c, name].sort());
   };
