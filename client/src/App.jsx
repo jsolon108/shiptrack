@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 import { useMsal } from "@azure/msal-react";
 import { loginRequest, EDITOR_GROUP_ID } from "./authConfig";
 
-const BRANCHES = ["All Branches", "Farmingdale", "Bohemia", "Bohemia - Aero"];
+const BRANCHES = ["All Branches", "Farmingdale", "Bohemia", "Bohemia - Aero", "Milford"];
 
 const DEMO_ACCOUNTS = [
   { id: 1, name: "Sarah Mitchell",  email: "s.mitchell@company.com",  role: "editor", branch: null,          avatar: "SM" },
