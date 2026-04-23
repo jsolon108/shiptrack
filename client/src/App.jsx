@@ -598,33 +598,26 @@ export default function App() {
     return matchSearch && (filterStatus === "All" || s.status === filterStatus);
   }), [branchShipments, search, filterStatus]);
 
- const handleSave = async (form) => {
-  if (adding) {
-    const { id, ...formWithoutId } = form;
-    const { data, error } = await supabase
-      .from("shipments")
-      .insert([formWithoutId])
-      .select()
-      .single();
-    if (error) {
-      alert("Failed to save shipment: " + error.message);
-      return;
+  const handleSave = async (form) => {
+    if (adding) {
+      const { id, ...formWithoutId } = form;
+      const { data, error } = await supabase
+        .from("shipments")
+        .insert([formWithoutId])
+        .select()
+        .single();
+      if (error) {
+        alert("Failed to save shipment: " + error.message);
+        return;
+      }
+      setShipments(s => [...s, data]);
+      setAdding(false);
+    } else {
+      await supabase.from("shipments").update(form).eq("id", form.id);
+      setShipments(s => s.map(sh => sh.id === form.id ? form : sh));
+      setEditing(null);
     }
-    setShipments(s => [...s, data]);
-    setAdding(false);
-  } else {
-    await supabase.from("shipments").update(form).eq("id", form.id);
-    setShipments(s => s.map(sh => sh.id === form.id ? form : sh));
-    setEditing(null);
-  }
-};
-Three changes from your current code:
-
-Strip the client-generated ID before inserting — the database trigger will fill it in
-Add .select().single() so Supabase returns the row with the real ID, which we then put into local state (so editing/deleting works immediately without a refresh)
-Surface errors with an alert so future silent failures don't go unnoticed
-
-Replace lines 601–613 with the block above, push to GitHub, Vercel auto-deploys. Done.
+  };
 
   const handleAddSupplier = async (name) => {
     await supabase.from("suppliers").insert([{ name }]);
